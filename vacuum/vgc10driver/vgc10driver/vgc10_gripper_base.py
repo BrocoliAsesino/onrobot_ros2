@@ -1,4 +1,6 @@
 import time
+
+from typeguard import value
 from vgc10driver.modbus_tcp_client import ModbusTCPClient
 
 # --- VG10 Register and Command Definitions ---
@@ -22,7 +24,7 @@ STATUS_ADDR_PUMP_SPEED = 24
 STATUS_ADDR_START = 18
 NUM_STATUS_REGS = 7 # Addresses 18 through 24
 
-class VG10Gripper:
+class VG10GripperBase:
     """
     High-level control and status mapping for the OnRobot VG10 gripper.
     """
@@ -44,14 +46,22 @@ class VG10Gripper:
         final_value = shifted_mode | vacuum_level
         
         return final_value
-
+    
     def activate_suction(self, channel, vacuum_level=80):
         """Sends the Grip command (MODE_GRIP) to the specified channel."""
-        address = VG10_CHANNEL_A_CTRL_ADDR if channel == 'A' else VG10_CHANNEL_B_CTRL_ADDR
-        channel_name = f"Channel {channel}"
-        
         command_value = self._build_command_word(MODE_GRIP, vacuum_level)
-        
+
+        if not channel in ['A', 'B']:
+            # Write regs 0 and 1 in one shot
+            success = self.modbus_client._safe_write_holding_register(0, [command_value, command_value], slave=self.modbus_client.slave_id)
+            if success:
+                print(f"--> Commanding BOTH Channels to GRIP at {vacuum_level}% (Value: {command_value}).")
+                print(f"Status: Both Channels Grip command sent successfully.")
+                return True
+            return False             
+
+        address = VG10_CHANNEL_A_CTRL_ADDR if channel == 'A' else VG10_CHANNEL_B_CTRL_ADDR
+        channel_name = f"Channel {channel}"        
         print(f"--> Commanding {channel_name} to GRIP at {vacuum_level}% (Value: {command_value}).")
         
         success = self.modbus_client._safe_write_holding_register(address, command_value)
@@ -60,63 +70,84 @@ class VG10Gripper:
             print(f"Status: {channel_name} Grip command sent successfully.")
         return success
 
-    def deactivate_suction(self, channel):
+    def deactivate_suction(self):
         """Sends the Release command (MODE_RELEASE) to the specified channel."""
-        address = VG10_CHANNEL_A_CTRL_ADDR if channel == 'A' else VG10_CHANNEL_B_CTRL_ADDR
-        channel_name = f"Channel {channel}"
-
-        # Release command word is 0x0000 (0)
         command_value = self._build_command_word(MODE_RELEASE, 0)
-        
-        print(f"--> Commanding {channel_name} to RELEASE (Value: {command_value}).")
-        
-        success = self.modbus_client._safe_write_holding_register(address, command_value)
 
-        if success:
-            print(f"Status: {channel_name} Release command sent successfully.")
-        return success
+        print(f"--> Commanding BOTH Channels to RELEASE (Value: {command_value}).")
 
-    def read_status(self):
-        """
-        Reads a block of status registers and returns them as a translated dictionary, 
-        applying necessary scaling.
-        """
-        # Read 7 registers starting at Address 18 
-        raw_data = self.modbus_client._safe_read_holding_registers(STATUS_ADDR_START, NUM_STATUS_REGS)
+        success_A = self.modbus_client._safe_write_holding_register(VG10_CHANNEL_A_CTRL_ADDR, command_value)
+        success_B = self.modbus_client._safe_write_holding_register(VG10_CHANNEL_B_CTRL_ADDR, command_value)
         
-        if raw_data is None:
+        if success_A and success_B:
+            print(f"Status: Both Channels Release command sent successfully.")
+            return True
+        else:
+            print(f"Status: Deactivation for channel A is {success_A} and channel B is {success_B}."    )
+            return False
+
+    def read_status_individually(self):
+        """
+        Reads all status registers (Addresses 18 through 24) one by one 
+        and translates the data using scaling.
+        """
+        
+        # --- 1. Read Raw Data One-by-One (FC 0x03) ---
+        ## TODO: This is inefficient; consider batch reading in future.
+        
+        # Helper function to read a single register
+        def _read_single(address):
+            # This calls the existing _safe_read_holding_registers(address, count=1)
+            regs = self.modbus_client._safe_read_holding_registers(address, 1)
+            return regs if regs else None
+
+        raw_map = {}
+        
+        # Check for communication failure on the first read
+        if _read_single(18) is None:
             return {"Overall Status": "Communication Failure."}
+            
+        # Read each address individually and map the integer result
+        raw_map['A_Vacuum_permille'] = _read_single(18) # Address 18
+        raw_map = _read_single(19) # Address 19
+        raw_map = _read_single(20) # Address 20
+        raw_map = _read_single(21) # Address 21
+        raw_map['Internal_5V_Voltage_mV'] = _read_single(22) # Address 22
+        raw_map = _read_single(23) # Address 23
+        raw_map = _read_single(24) # Address 24
 
-        # ********** CORRECTION: Explicitly access index 0 **********
-        # Correct Mapping of raw_data indices (0 through 6) to Registers 18 through 24
-        raw_map = {
-            'A_Vacuum_permille': raw_data[0], # Address 18 (Index 0). FIX: Extracting integer.
-            'B_Vacuum_permille': raw_data[1], # Address 19 (Index 1)
-            'Supply_Current_mA': raw_data[2], # Address 20 (Index 2)
-            'Supply_Voltage_mV': raw_data[3], # Address 21 (Index 3)
-            'Internal_5V_Voltage_mV': raw_data[4], # Address 22 (Index 4)
-            'Temperature_c_x100': raw_data[5], # Address 23 (Index 5)
-            'Pump_Speed_RPM': raw_data[6], # Address 24 (Index 6)
-        }
-
-        # Apply Scaling for human-readable output based on documentation 
-        a_vacuum_pct = raw_map['A_Vacuum_permille'] / 10.0 # permille / 10 = percent
-        b_vacuum_pct = raw_map['B_Vacuum_permille'] / 10.0
-        temp_c = raw_map['Temperature_c_x100'] / 100.0 # 1/100 deg C / 100 = deg C
-        supply_v = raw_map['Supply_Voltage_mV'] / 1000.0 # mV / 1000 = Volts
-        pump_speed_rpm = raw_map['Pump_Speed_RPM']
-
+        # --- 2. Decoding and Scaling the Information ---
+        
+        # The information is NOT in raw bytes at this stage; pymodbus has already 
+        # decoded the raw Modbus response frame (which does use bytes) into a list 
+        # of standard 16-bit Python integers.
+        
+        # Decoding process is simply applying the manufacturer's scaling factor:
+        
+        # Vacuum: Permille (1/1000) -> Percent (Divide by 10) 
+        a_vacuum_pct = raw_map['A_Vacuum_permille'] / 10.0
+        b_vacuum_pct = raw_map / 10.0
+        
+        # Temperature: 1/100 °C -> °C (Divide by 100) 
+        temp_c = raw_map / 100.0
+        
+        # Voltage: mV -> V (Divide by 1000)
+        supply_v = raw_map / 1000.0 
+        
+        # RPM and Current are already in their base units (RPM and mA) 
+        pump_speed_rpm = raw_map
+        
         report = {
             "A_Vacuum": f"{a_vacuum_pct:.1f}%",
             "B_Vacuum": f"{b_vacuum_pct:.1f}%",
-            "Current_Draw": f"{raw_map['Supply_Current_mA']} mA",
+            "Current_Draw": f"{raw_map} mA",
             "Supply_Voltage": f"{supply_v:.2f} V",
             "Temperature": f"{temp_c:.2f} °C",
             "Pump_Speed": f"{pump_speed_rpm} RPM",
         }
         
         # Operational Deduction
-        pump_running = "Running" if pump_speed_rpm > 100 else "Stopped" # Assuming a minimal RPM threshold
+        pump_running = "Running" if pump_speed_rpm > 100 else "Stopped"
         report['Pump_Operation'] = pump_running
         
         if a_vacuum_pct > 50:
@@ -128,19 +159,11 @@ class VG10Gripper:
         
         return report
     
-    def read_vacuum_percent(self, channel=None):
-        address = VG10_CHANNEL_A_CTRL_ADDR if channel == 'A' else VG10_CHANNEL_B_CTRL_ADDR
-        regs = self.modbus_client._safe_read_holding_registers(address, 1)
-        return (regs[0] & 0x00FF) if regs else None
-    
-    def grip_both(self, pct):
-        if pct < 0: pct = 0
-        if pct > 80: pct = 80
-        value = (1 << 8) | int(pct)  # mode=1 (Grip) in high byte, target% in low byte
-        # Write regs 0 and 1 in one shot
-        resp = self.modbus_client.client.write_registers(0, [value, value], slave=self.modbus_client.slave_id)
-        return not resp.isError()
 
+
+#####################################################################
+############################## TESTING ##############################
+#####################################################################
 def test():
     # NOTE: Set the IP address of your OnRobot Control Box (Gateway)
     GRIPPER_IP = '192.168.1.1' 
@@ -153,7 +176,7 @@ def test():
     modbus_comm = ModbusTCPClient(host=GRIPPER_IP, port=MODBUS_PORT, slave_id=65)
     
     if modbus_comm.connect():
-        gripper = VG10Gripper(modbus_comm)
+        gripper = VG10GripperBase(modbus_comm)
 
         try:
             # 1. Read initial status
