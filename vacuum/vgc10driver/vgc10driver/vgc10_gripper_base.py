@@ -49,8 +49,7 @@ class VGC10GripperBase:
         """Sends the Grip command (MODE_GRIP) to the specified channel."""
         command_value = self._build_command_word(MODE_GRIP, vacuum_level)
         if not channel in ['A', 'B']:
-            # Write regs 0 and 1 in one shot
-            success = self.modbus_client._safe_write_holding_register(0, [command_value, command_value], slave=self.modbus_client.slave_id)
+            success = self.modbus_client._safe_write_holding_register(0, [command_value, command_value])
             if success:
                 print(f"--> Commanding BOTH Channels to GRIP at {vacuum_level}% (Value: {command_value}).")
                 print(f"Status: Both Channels Grip command sent successfully.")
@@ -70,18 +69,33 @@ class VGC10GripperBase:
     def deactivate_suction(self):
         """Sends the Release command (MODE_RELEASE) to the specified channel."""
         command_value = self._build_command_word(MODE_RELEASE, 0)
-
-        print(f"--> Commanding BOTH Channels to RELEASE (Value: {command_value}).")
-
-        success_A = self.modbus_client._safe_write_holding_register(VG10_CHANNEL_A_CTRL_ADDR, command_value)
-        success_B = self.modbus_client._safe_write_holding_register(VG10_CHANNEL_B_CTRL_ADDR, command_value)
+        success = self.modbus_client._safe_write_holding_register(0, [command_value, command_value])
         
-        if success_A and success_B:
+        if success:
             print(f"Status: Both Channels Release command sent successfully.")
             return True
         else:
-            print(f"Status: Deactivation for channel A is {success_A} and channel B is {success_B}."    )
             return False
+        
+    def set_to_idle(self, channel):
+        """Sends the Idle command (MODE_IDLE) to the specified channel."""
+        command_value = self._build_command_word(MODE_IDLE, 0)
+        if not channel in ['A', 'B']:
+            success = self.modbus_client._safe_write_holding_register(0, [command_value, command_value])
+            if success:
+                print(f"--> Commanding BOTH Channels to IDLE (Value: {command_value}).")
+                print(f"Status: Both Channels Idle command sent successfully.")
+                return True
+            return False
+
+        address = VG10_CHANNEL_A_CTRL_ADDR if channel == 'A' else VG10_CHANNEL_B_CTRL_ADDR
+        channel_name = f"Channel {channel}"        
+        print(f"--> Commanding {channel_name} to IDLE (Value: {command_value}).")
+        success = self.modbus_client._safe_write_holding_register(address, command_value)
+        
+        if success:
+            print(f"Status: {channel_name} Idle command sent successfully.")
+        return success
 
     def read_status_individually(self):
         """

@@ -1,4 +1,6 @@
 from setuptools import find_packages, setup
+from glob import glob
+import os
 
 package_name = 'vgc10driver'
 
@@ -10,6 +12,7 @@ setup(
         ('share/ament_index/resource_index/packages',
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
+        (os.path.join('share', package_name, 'launch'), glob('launch/*')),
     ],
     install_requires=['setuptools'],
     zip_safe=True,
@@ -20,7 +23,8 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'vgc10_gripper_base = vgc10driver.vgc10_gripper_base:test'
+            'vgc10_gripper_base = vgc10driver.vgc10_gripper_base:test',
+            'vgc10_ros2_driver = vgc10driver.vgc10_ros2_driver:main',
         ],
     },
 )
