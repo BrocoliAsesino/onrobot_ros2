@@ -6,19 +6,25 @@ class ModbusTCPClient:
     """
     Handles low-level Modbus TCP communication over Ethernet.
     """
-    def __init__(self, host, port=502, slave_id=65, timeout=1.0):
+    def __init__(self, host, port=502, slave_id=65, timeout=1.0, use_dummy=False):
         self.slave_id = slave_id
         self.host = host
         self.port = port
-        # Use ModbusTcpClient for Ethernet connection 
-        self.client = ModbusClient(
-            host=host,
-            port=port,
-            timeout=timeout
-        )
+        self.use_dummy = use_dummy
+        # Use ModbusTcpClient for Ethernet connection
+        if use_dummy:
+            self.client = None
+        else:
+            self.client = ModbusClient(
+                host=host,
+                port=port,
+                timeout=timeout
+            )
 
     def connect(self):
         """Establishes the Ethernet connection."""
+        if self.use_dummy:
+            return True
         try:
             if self.client.connect():
                 print(f"Modbus TCP client connected to {self.host}:{self.port}.")
@@ -32,6 +38,8 @@ class ModbusTCPClient:
 
     def close(self):
         """Closes the Ethernet socket connection."""
+        if self.use_dummy:
+            return True
         if self.client:
             self.client.close()
 
@@ -40,6 +48,9 @@ class ModbusTCPClient:
         Writes a single 16-bit value to a Holding Register (FC 0x06). 
         Slave ID is still required if connecting through a gateway.
         """
+        if self.use_dummy:
+            return True
+        
         if not self.client.connected:
             if not self.connect():
                 return False
@@ -62,6 +73,9 @@ class ModbusTCPClient:
         """
         Writes multiple 16-bit values to Holding Registers (FC 0x10). 
         """
+        if self.use_dummy:
+            return True
+        
         if not self.client.connected:
             if not self.connect():
                 return False
@@ -84,6 +98,9 @@ class ModbusTCPClient:
         """
         Reads one or more Holding Registers (FC 0x03) for status.
         """
+        if self.use_dummy:
+            return True
+        
         if not self.client.connected:
             if not self.connect():
                 return None
