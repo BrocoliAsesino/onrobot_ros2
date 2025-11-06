@@ -20,17 +20,9 @@ class VGC10ROS2Driver(Node):
         self.action_callback_group = ReentrantCallbackGroup()
         self.service_callback_group = MutuallyExclusiveCallbackGroup()
         
-        self.declare_parameters()
         self.create_services()
         
         self.get_logger().info('VGC10 ROS2 Driver initialized')
-
-    def declare_parameters(self):
-        """Declare all ROS parameters"""
-        self.declare_parameter('ip_address', '192.168.1.1')
-        self.declare_parameter('port', 502)
-        self.declare_parameter('slave_id', 65)
-        self.declare_parameter('default_vacuum_level', 80)
         
     def create_services(self):
         """Create all ROS services and action servers"""
@@ -120,10 +112,12 @@ def main():
         ip_address = node.declare_parameter('ip_address', '192.168.1.1').value
         port = node.declare_parameter('port', 502).value
         slave_id = node.declare_parameter('slave_id', 65).value
+        use_dummy = node.declare_parameter('use_dummy', False)
         
         # Initialize gripper
-        modbus_client = ModbusTCPClient(host=ip_address, port=port, slave_id=slave_id)
-        
+        modbus_client = ModbusTCPClient(host=ip_address, port=port, slave_id=slave_id,
+                                        use_dummy=use_dummy)
+
         if not modbus_client.connect():
             raise RuntimeError("Failed to connect to gripper")
             
