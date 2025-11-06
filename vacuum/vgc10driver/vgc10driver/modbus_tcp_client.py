@@ -57,17 +57,28 @@ class ModbusTCPClient:
         except ModbusException as e:
             print(f"Communication Error during write to address {address}: {e}")
             return False
-
-    def _safe_read_input_registers(self, address, count=1):
+        
+    def _safe_write_holding_registers(self, address, values):
+        """
+        Writes multiple 16-bit values to Holding Registers (FC 0x10). 
+        """
+        if not self.client.connected:
+            if not self.connect():
+                return False
+        
         try:
-            response = self.client.read_input_registers(address, count=count, slave=65)
+            # write_registers uses FC 0x10 (Write Multiple Holding Registers)
+            response = self.client.write_registers(address, values, slave=self.slave_id)
+            
             if response.isError():
-                print(f"Modbus Exception (FC4): Read failed at address {address}. Response: {response}")
-                return None
-            return getattr(response, "registers", None)
-        except Exception as e:
-            print(f"Communication Error during FC4 read from address {address}: {e}")
-            return None
+                print(f"Modbus Exception: Write failed at address {address}. Response: {response}")
+                return False
+            
+            return True
+            
+        except ModbusException as e:
+            print(f"Communication Error during write to address {address}: {e}")
+            return False
 
     def _safe_read_holding_registers(self, address, count=1):
         """
@@ -78,7 +89,7 @@ class ModbusTCPClient:
                 return None
         
         try:
-            # read_holding_registers uses FC 0x03 [1]
+            # read_holding_registers uses FC 0x03 (Read Holding Registers)
             response = self.client.read_holding_registers(address, count=count, slave=self.slave_id)
             
             if response.isError():
