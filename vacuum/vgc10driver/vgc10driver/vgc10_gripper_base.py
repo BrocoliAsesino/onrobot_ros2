@@ -22,9 +22,9 @@ STATUS_ADDR_PUMP_SPEED = 24
 
 # Status Register Start Address and Total Count 
 STATUS_ADDR_START = 18
-NUM_STATUS_REGS = 7 # Addresses 18 through 24
+NUM_STATUS_REGS = 7 
 
-class VG10GripperBase:
+class VGC10GripperBase:
     """
     High-level control and status mapping for the OnRobot VG10 gripper.
     """
@@ -36,12 +36,10 @@ class VG10GripperBase:
         Packs the Control Mode (high byte) and Target Vacuum (low byte) 
         into a single 16-bit integer.
         """
-        # Input Validation: Target Vacuum should never exceed 80% 
         if vacuum_level > 80 and mode == MODE_GRIP:
             print(f"WARNING: Target vacuum clamped to 80% (VG10 limit).")
             vacuum_level = 80
         
-        # V_final = (M << 8) | T
         shifted_mode = mode << 8 
         final_value = shifted_mode | vacuum_level
         
@@ -50,7 +48,6 @@ class VG10GripperBase:
     def activate_suction(self, channel, vacuum_level=80):
         """Sends the Grip command (MODE_GRIP) to the specified channel."""
         command_value = self._build_command_word(MODE_GRIP, vacuum_level)
-
         if not channel in ['A', 'B']:
             # Write regs 0 and 1 in one shot
             success = self.modbus_client._safe_write_holding_register(0, [command_value, command_value], slave=self.modbus_client.slave_id)
@@ -95,9 +92,7 @@ class VG10GripperBase:
         # --- 1. Read Raw Data One-by-One (FC 0x03) ---
         ## TODO: This is inefficient; consider batch reading in future.
         
-        # Helper function to read a single register
         def _read_single(address):
-            # This calls the existing _safe_read_holding_registers(address, count=1)
             regs = self.modbus_client._safe_read_holding_registers(address, 1)
             return regs if regs else None
 
@@ -176,7 +171,7 @@ def test():
     modbus_comm = ModbusTCPClient(host=GRIPPER_IP, port=MODBUS_PORT, slave_id=65)
     
     if modbus_comm.connect():
-        gripper = VG10GripperBase(modbus_comm)
+        gripper = VGC10GripperBase(modbus_comm)
 
         try:
             # 1. Read initial status
@@ -210,10 +205,8 @@ def test():
             print(modbus_comm._safe_read_holding_registers(24, 1))
 
             
-            # 4. Deactivate suction on Channel A (Release)
-            print("\n--- Deactivating Suction (Channel A) ---")
-            gripper.deactivate_suction('A')
-            gripper.deactivate_suction('B')
+            # 4. Deactivate suction 
+            gripper.deactivate_suction()
             
             time.sleep(1)
 
@@ -224,7 +217,19 @@ def test():
                 print(f"| {key.ljust(20)}: {value}")
 
         finally:
-            print("\n--- Closing Modbus Connection ---")
+            # --- SAFETY AND CLEANUP BLOCK ---
+            print("\n--- Initiating Safety Shutdown (Sending Release) ---")
+            
+            # 1. Send Release command to critical channel(s)
+            # We target Channel A to ensure the vacuum is actively dropped.
+            # We suppress the output and rely on the client's internal error handling.
+            gripper.deactivate_suction() 
+            
+            # Optional: Add a small delay to ensure the command is sent before closing the socket
+            time.sleep(0.1) 
+            
+            # 2. Close the connection
+            print("--- Closing Modbus Connection ---")
             modbus_comm.close()
     else:
         print("Application terminated due to communication failure.")
