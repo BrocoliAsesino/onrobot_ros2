@@ -1,0 +1,16 @@
+bool read_all  # If true, read all status registers, if false just read vacuum levels
+---
+# Response
+float32 vacuum_a      # Vacuum level for channel A (%)
+float32 vacuum_b      # Vacuum level for channel B (%)
+float32 current_draw  # Current consumption (mA)
+float32 temperature   # Temperature (°C)
+uint32 pump_speed     # Pump speed (RPM)
+float32 supply_voltage # Supply voltage (V)
+
+string pump_state     # "Running" or "Stopped"
+string channel_a_state # "Grip Success", "Grip Attempt", or "Released/Idle"
+string channel_b_state # "Grip Success", "Grip Attempt", or "Released/Idle"
+
+bool success         # Whether the read was successful
+string message       # Error message if not successful

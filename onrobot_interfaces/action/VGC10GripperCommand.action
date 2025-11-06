@@ -1,0 +1,27 @@
+# Goal
+uint8 RELEASE=0
+uint8 GRIP=1
+uint8 IDLE=2
+uint8 mode
+
+string CHANNEL_A="A"
+string CHANNEL_B="B"
+string CHANNEL_BOTH="AB"
+string channel
+
+float32 vacuum_level  # Target vacuum level (0-80%)
+float32 timeout      # Maximum time to wait for desired vacuum level (seconds)
+
+---
+# Result
+bool success
+string message
+float32 final_vacuum_level
+float32 elapsed_time
+
+---
+# Feedback
+float32 current_vacuum_level
+float32 target_vacuum_level
+float32 time_elapsed
+bool vacuum_holding 
