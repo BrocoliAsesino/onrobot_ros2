@@ -1,0 +1,10 @@
+moveit_setup_assistant_config:
+  urdf:
+    package: onrobot_vg_description
+    relative_path: urdf/onrobot_vgc10_4cups_model.xacro
+  srdf:
+    relative_path: config/onrobot_vgc10_model.srdf
+  package_settings:
+    author_name: Alejandro Gonzalez
+    author_email: alejandro.gonzalez@eurecat.org
+    generated_timestamp: 1762511089
