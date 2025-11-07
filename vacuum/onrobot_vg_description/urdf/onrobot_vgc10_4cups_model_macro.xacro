@@ -90,6 +90,8 @@
       </collision>
     </link>
     <link name="${prefix}suction" />
+    <!-- added prismatic child link -->
+    <link name="${prefix}suction_regulator"/>
   </xacro:macro>
 
   <xacro:macro name="suction_joint" params="prefix">
@@ -123,6 +125,16 @@
       <child link="${prefix}suction4" />
       <axis xyz="1 0 0" />
     </joint>
+    <!-- added prismatic joint -->
+    <joint name="${prefix}_suction_regulator_joint" type="prismatic">
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <parent link="${prefix}suction"/>
+      <child link="${prefix}suction_regulator"/>
+      <axis xyz="0 0 1"/>
+      <limit lower="0.0" upper="80.0" effort="100" velocity="0.2"/>
+      <dynamics damping="0.1" friction="0.0"/>
+    </joint>
+    <!-- end added joint -->
   </xacro:macro>
 
   <xacro:include filename="$(find onrobot_vg_description)/urdf/onrobot_vgc10_4cups.xacro" />
