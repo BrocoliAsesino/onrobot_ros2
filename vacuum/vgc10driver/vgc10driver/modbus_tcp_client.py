@@ -99,7 +99,7 @@ class ModbusTCPClient:
         Reads one or more Holding Registers (FC 0x03) for status.
         """
         if self.use_dummy:
-            return True
+            return [0] * count
         
         if not self.client.connected:
             if not self.connect():
