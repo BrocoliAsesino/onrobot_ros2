@@ -11,7 +11,7 @@ def generate_launch_description():
                 'ip_address': '192.168.1.1',
                 'port': 502,
                 'slave_id': 65,
-                'use_dummy': True,
+                'use_dummy': True
             }],
             output='screen'
         )

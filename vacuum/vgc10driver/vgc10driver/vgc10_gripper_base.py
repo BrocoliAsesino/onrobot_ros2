@@ -47,6 +47,7 @@ class VGC10GripperBase:
     
     def activate_suction(self, channel, vacuum_level=80):
         """Sends the Grip command (MODE_GRIP) to the specified channel."""
+        vacuum_level = max(0, min(80, int(vacuum_level)))
         command_value = self._build_command_word(MODE_GRIP, vacuum_level)
         if not channel in ['A', 'B']:
             success = self.modbus_client._safe_write_holding_register(0, [command_value, command_value])
@@ -108,22 +109,21 @@ class VGC10GripperBase:
         
         def _read_single(address):
             regs = self.modbus_client._safe_read_holding_registers(address, 1)
-            return regs if regs else None
+            return regs[0] if regs else None
 
-        raw_map = {}
-        
-        # Check for communication failure on the first read
-        if _read_single(18) is None:
-            return {"Overall Status": "Communication Failure."}
-            
-        # Read each address individually and map the integer result
-        raw_map['A_Vacuum_permille'] = _read_single(18) # Address 18
-        raw_map = _read_single(19) # Address 19
-        raw_map = _read_single(20) # Address 20
-        raw_map = _read_single(21) # Address 21
-        raw_map['Internal_5V_Voltage_mV'] = _read_single(22) # Address 22
-        raw_map = _read_single(23) # Address 23
-        raw_map = _read_single(24) # Address 24
+        first = _read_single(STATUS_ADDR_A_VACUUM)
+        if first is None:
+            return {"Overall_Status": "Communication Failure"}
+
+        raw = {
+            "A_Vacuum_permille": _read_single(STATUS_ADDR_A_VACUUM),
+            "B_Vacuum_permille": _read_single(STATUS_ADDR_B_VACUUM),
+            "Supply_Current_mA": _read_single(STATUS_ADDR_SUPPLY_CURRENT),
+            "Reserved_21": _read_single(21),
+            "Internal_5V_Voltage_mV": _read_single(22),
+            "Temperature_x100C": _read_single(STATUS_ADDR_TEMPERATURE),
+            "Pump_Speed_RPM": _read_single(STATUS_ADDR_PUMP_SPEED),
+        }
 
         # --- 2. Decoding and Scaling the Information ---
         
@@ -134,38 +134,28 @@ class VGC10GripperBase:
         # Decoding process is simply applying the manufacturer's scaling factor:
         
         # Vacuum: Permille (1/1000) -> Percent (Divide by 10) 
-        a_vacuum_pct = raw_map['A_Vacuum_permille'] / 10.0
-        b_vacuum_pct = raw_map / 10.0
-        
-        # Temperature: 1/100 °C -> °C (Divide by 100) 
-        temp_c = raw_map / 100.0
-        
-        # Voltage: mV -> V (Divide by 1000)
-        supply_v = raw_map / 1000.0 
-        
-        # RPM and Current are already in their base units (RPM and mA) 
-        pump_speed_rpm = raw_map
-        
+        a_vac_pct = raw["A_Vacuum_permille"] / 10.0
+        b_vac_pct = raw["B_Vacuum_permille"] / 10.0
+        temp_c = raw["Temperature_x100C"] / 100.0
+        supply_v = raw["Internal_5V_Voltage_mV"] / 1000.0
+        pump_rpm = raw["Pump_Speed_RPM"]
+        current_mA = raw["Supply_Current_mA"]
+
         report = {
-            "A_Vacuum": f"{a_vacuum_pct:.1f}%",
-            "B_Vacuum": f"{b_vacuum_pct:.1f}%",
-            "Current_Draw": f"{raw_map} mA",
+            "A_Vacuum": f"{a_vac_pct:.1f}%",
+            "B_Vacuum": f"{b_vac_pct:.1f}%",
+            "Current_Draw": f"{current_mA} mA",
             "Supply_Voltage": f"{supply_v:.2f} V",
             "Temperature": f"{temp_c:.2f} °C",
-            "Pump_Speed": f"{pump_speed_rpm} RPM",
+            "Pump_Speed": f"{pump_rpm} RPM",
+            "Pump_Operation": "Running" if pump_rpm > 100 else "Stopped",
+            "A_Operation": (
+                "Grip Success (High Vacuum)" if a_vac_pct > 50
+                else "Grip Attempt (Low Vacuum/Leak)" if a_vac_pct > 0
+                else "Released/Idle"
+            ),
+            "Raw": raw
         }
-        
-        # Operational Deduction
-        pump_running = "Running" if pump_speed_rpm > 100 else "Stopped"
-        report['Pump_Operation'] = pump_running
-        
-        if a_vacuum_pct > 50:
-            report['A_Operation'] = "Grip Success (High Vacuum)"
-        elif a_vacuum_pct > 0:
-            report['A_Operation'] = "Grip Attempt (Low Vacuum/Leak)"
-        else:
-            report['A_Operation'] = "Released/Idle"
-        
         return report
     
 

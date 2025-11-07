@@ -29,7 +29,7 @@ class VGC10ROS2Driver(Node):
         self._action_server = ActionServer(
             self,
             GripperCommand,
-            'onrobot_vgc10/gripper_command',
+            '/onrobot_vgc10_controller/gripper_command',
             self.execute_action_callback,
             callback_group=self.action_callback_group
         )
