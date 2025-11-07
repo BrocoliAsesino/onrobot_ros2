@@ -1,0 +1,13 @@
+# MoveIt uses this configuration for controller management
+
+moveit_controller_manager: moveit_simple_controller_manager/MoveItSimpleControllerManager
+
+controller_names:
+  - onrobot_vgc10_controller
+
+onrobot_vgc10_controller:
+  type: GripperCommand
+  action_ns: gripper_command
+  default: true
+  joints: 
+    - _suction_regulator_joint
