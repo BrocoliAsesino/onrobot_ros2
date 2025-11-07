@@ -32,10 +32,10 @@ from launch.substitutions import (
     FindExecutable,
     LaunchConfiguration,
     PathJoinSubstitution,
+    FindPackageShare,
 )
 import launch_ros
 import os
-
 
 def generate_launch_description():
     pkg_share = launch_ros.substitutions.FindPackageShare(
@@ -44,7 +44,7 @@ def generate_launch_description():
     default_model_path = os.path.join(
         pkg_share, "urdf", "onrobot_vgc10_4cups_model.xacro"
     )
-    
+
     default_rviz_config_path = os.path.join(pkg_share, "rviz", "view_urdf.rviz")
 
     args = []
