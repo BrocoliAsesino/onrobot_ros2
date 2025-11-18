@@ -31,7 +31,8 @@ class VGC10ROS2Driver(Node):
             GripperCommand,
             '/onrobot_vgc10_controller/gripper_command',
             self.execute_action_callback,
-            callback_group=self.action_callback_group
+            callback_group=self.action_callback_group,
+            goal_callback=self.goal_callback  # Add goal callback
         )
         
         self._status_service = self.create_service(
@@ -40,6 +41,11 @@ class VGC10ROS2Driver(Node):
             self.get_status_callback,
             callback_group=self.service_callback_group
         )
+    
+    def goal_callback(self, goal_request):
+        """Accept all goals"""
+        self.get_logger().info('Received goal request')
+        return GoalResponse.ACCEPT
 
     def get_status_callback(self, request, response):
         try:
@@ -75,25 +81,31 @@ class VGC10ROS2Driver(Node):
     
     async def execute_action_callback(self, goal_handle):
         try:
+            self.get_logger().info('Executing action callback')
             command = goal_handle.request
             position = command.command.position  
             
             vacuum_level = int(position)
+            self.get_logger().info(f'Setting vacuum level to: {vacuum_level}%')
             
             if vacuum_level > 0:
                 success = self.gripper_base.activate_suction('AB', vacuum_level)
+                self.get_logger().info(f'Suction activation result: {success}')
             else:
                 success = self.gripper_base.deactivate_suction()
-            
+                self.get_logger().info(f'Suction deactivation result: {success}')
+                        
             status = self.gripper_base.read_status_individually()
             
             result = GripperCommand.Result()
             
             current_vacuum = float(status['A_Vacuum'].strip('%')) 
             result.position = current_vacuum
-            result.effort = float(status['Current_Draw'].split()[0])  # Current draw as effort
+            result.effort = float(status['Current_Draw'].split()[0])
             result.stalled = status['Pump_Operation'] == "Stopped"
             result.reached_goal = success
+            
+            self.get_logger().info(f'Action completed - Vacuum: {current_vacuum}%, Success: {success}')
 
             goal_handle.succeed()
             return result
@@ -107,12 +119,25 @@ def main():
     rclpy.init()
     
     try:
-        # Get parameters from launch file or command line
-        node = rclpy.create_node('vgc10_parameter_node')
-        ip_address = node.declare_parameter('ip_address', '192.168.1.1').value
-        port = node.declare_parameter('port', 502).value
-        slave_id = node.declare_parameter('slave_id', 65).value
-        use_dummy = node.declare_parameter('use_dummy', False)
+        # Create a temporary node to declare and get parameters
+        temp_node = rclpy.create_node('vgc10_parameter_node')
+        
+        # Declare parameters with defaults
+        temp_node.declare_parameter('ip_address', '192.168.1.1')
+        temp_node.declare_parameter('port', 502)
+        temp_node.declare_parameter('slave_id', 65)
+        temp_node.declare_parameter('use_dummy', False)
+        
+        # Get parameter values
+        ip_address = temp_node.get_parameter('ip_address').value
+        port = temp_node.get_parameter('port').value
+        slave_id = temp_node.get_parameter('slave_id').value
+        use_dummy = temp_node.get_parameter('use_dummy').value
+        
+        temp_node.get_logger().info(f'Connecting to gripper at {ip_address}:{port} (slave_id={slave_id}, dummy={use_dummy})')
+        
+        # Destroy temp node
+        temp_node.destroy_node()
         
         # Initialize gripper
         modbus_client = ModbusTCPClient(host=ip_address, port=port, slave_id=slave_id,
