@@ -81,8 +81,10 @@ class VGC10ROS2Driver(Node):
                 response.message = "Communication failure with gripper"
                 return response
             
-            response.vacuum_a = float(status['A_Vacuum'].strip('%'))
-            response.vacuum_b = float(status['B_Vacuum'].strip('%'))
+            # response.vacuum_a = float(status['A_Vacuum'].strip('%'))
+            # response.vacuum_b = float(status['B_Vacuum'].strip('%'))
+            response.vacuum_a = float(self.gripper_base.vacuum_percent)  # temporary fix
+            response.vacuum_b = float(self.gripper_base.vacuum_percent)  # temporary fix
             
             response.current_draw = float(status['Current_Draw'].split()[0])
             response.temperature = float(status['Temperature'].split()[0])
@@ -124,7 +126,8 @@ class VGC10ROS2Driver(Node):
             
             result = GripperCommand.Result()
             
-            current_vacuum = float(status['A_Vacuum'].strip('%')) 
+            # current_vacuum = float(status['A_Vacuum'].strip('%')) 
+            current_vacuum = float(self.gripper_base.vacuum_percent)  # temporary fix
             result.position = current_vacuum
             result.effort = float(status['Current_Draw'].split()[0])
             result.stalled = status['Pump_Operation'] == "Stopped"

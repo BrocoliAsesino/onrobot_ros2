@@ -30,6 +30,7 @@ class VGC10GripperBase:
     """
     def __init__(self, modbus_client: ModbusTCPClient):
         self.modbus_client = modbus_client
+        self.vacuum_percent = 0
 
     def _build_command_word(self, mode, vacuum_level):
         """
@@ -54,6 +55,7 @@ class VGC10GripperBase:
             if success:
                 print(f"--> Commanding BOTH Channels to GRIP at {vacuum_level}% (Value: {command_value}).")
                 print(f"Status: Both Channels Grip command sent successfully.")
+                self.vacuum_percent = vacuum_level
                 return True
             return False             
 
@@ -74,6 +76,7 @@ class VGC10GripperBase:
         
         if success:
             print(f"Status: Both Channels Release command sent successfully.")
+            self.vacuum_percent = 0
             return True
         else:
             return False
