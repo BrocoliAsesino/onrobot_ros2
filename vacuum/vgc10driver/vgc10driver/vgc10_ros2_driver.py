@@ -10,6 +10,7 @@ from control_msgs.action import GripperCommand
 from onrobot_interfaces.srv import VGC10Status
 from vgc10driver.modbus_tcp_client import ModbusTCPClient
 from vgc10driver.vgc10_gripper_base import VGC10GripperBase
+from sensor_msgs.msg import JointState
 
 
 class VGC10ROS2Driver(Node):
@@ -21,8 +22,32 @@ class VGC10ROS2Driver(Node):
         self.service_callback_group = MutuallyExclusiveCallbackGroup()
         
         self.create_services()
+        self.create_publishers()
         
         self.get_logger().info('VGC10 ROS2 Driver initialized')
+
+    def create_publishers(self):
+        self.joint_state_pub = self.create_publisher(
+            JointState, 
+            'joint_states', 
+            10
+        )
+        self.create_timer(0.02, self.publish_joint_state_callback)
+
+    def publish_joint_state_callback(self):
+        try:
+            status = self.gripper_base.read_vacuum_percent()
+            # temporary fix -- need to fix reading from register
+            status = self.gripper_base.vacuum_percent
+            joint_state_msg = JointState()
+            joint_state_msg.header.stamp = self.get_clock().now().to_msg()
+            joint_state_msg.name = ['_suction_regulator_joint']
+            joint_state_msg.position = [float(status)]
+            joint_state_msg.velocity = [0.0]
+            joint_state_msg.effort = [0.0]
+            self.joint_state_pub.publish(joint_state_msg)
+        except Exception as e:
+            self.get_logger().error(f'Joint state publish error: {str(e)}')
         
     def create_services(self):
         """Create all ROS services and action servers"""
