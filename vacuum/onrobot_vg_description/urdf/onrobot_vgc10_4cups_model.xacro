@@ -2,4 +2,17 @@
 <robot name="onrobot_vgc10_model" xmlns:xacro="http://ros.org/wiki/xacro">
   <xacro:include filename="$(find onrobot_vg_description)/urdf/onrobot_vgc10_4cups_model_macro.xacro" />
   <xacro:onrobot_vgc10 prefix=""/>
+
+  <ros2_control name="OnRobotVGC10" type="system">
+      <hardware>
+          <!-- By default, set up controllers for simulation. This won't work on real hardware -->
+          <plugin>mock_components/GenericSystem</plugin>
+      </hardware>
+      <joint name="_suction_regulator_joint">
+          <command_interface name="position"/>
+          <state_interface   name="position"/>
+          <state_interface   name="velocity"/>
+          <!-- <param name="initial_value">${initial_positions['gripper_prismatic_left']}</param> -->
+      </joint>
+  </ros2_control>
 </robot>

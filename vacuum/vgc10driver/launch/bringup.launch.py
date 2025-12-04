@@ -203,17 +203,59 @@ def launch_setup(context, *args, **kwargs):
         ],
     )
 
-    # Add joint_state_publisher_gui node
-    joint_state_publisher_node = Node(
-        package="joint_state_publisher_gui",
-        executable="joint_state_publisher_gui",
-        name="joint_state_publisher_gui",
-        parameters=[{"use_sim_time": use_sim_time}],
+    # # Add joint_state_publisher_gui node
+    # joint_state_publisher_node = Node(
+    #     package="joint_state_publisher_gui",
+    #     executable="joint_state_publisher_gui",
+    #     name="joint_state_publisher_gui",
+    #     parameters=[{"use_sim_time": use_sim_time}],
+    # )
+
+    ros2_controllers_yaml = _load_yaml(
+        moveit_config_package.perform(context),
+        os.path.join("config", "ros2_controllers.yaml")
+    )
+    if ros2_controllers_yaml:
+        ros2_controllers = {"robot_description_planning": ros2_controllers_yaml}
+    else:
+        ros2_controllers = {}
+
+    controller_manager = Node(
+        package="controller_manager",
+        executable="ros2_control_node",
+        parameters=[
+            robot_description,                         # URDF
+            PathJoinSubstitution([
+                FindPackageShare(moveit_config_package),
+                "config",
+                "ros2_controllers.yaml"
+            ])
+        ],
+        # condition=IfCondition(LaunchConfiguration("use_sim"))
+    )
+    
+    # Joint State Broadcaster
+    joint_state_broadcaster = Node(
+        package="controller_manager",
+        executable="spawner",
+        arguments=["joint_state_broadcaster"],
+        # condition=IfCondition(LaunchConfiguration("use_sim"))
+    )
+    
+    # Gripper Controller
+    gripper_controller = Node(
+        package="controller_manager",
+        executable="spawner",
+        arguments=["onrobot_vgc10_controller"],
+        # condition=IfCondition(LaunchConfiguration("use_sim"))
     )
 
     return [
         robot_state_publisher_node,
-        joint_state_publisher_node,
+        # joint_state_publisher_node,
+        controller_manager,
+        joint_state_broadcaster,
+        # gripper_controller,
         vgc10_node,
         move_group_node,
         rviz_node,
