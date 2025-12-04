@@ -1,0 +1,16 @@
+$(var ns):
+  controller_manager:
+    ros__parameters:
+      update_rate: 50
+
+      joint_state_broadcaster:
+        type: joint_state_broadcaster/JointStateBroadcaster
+
+      vacuum_controller:
+        type: position_controllers/JointGroupPositionController
+        
+  vacuum_controller:
+    ros__parameters:
+      joints:
+        - _suction_regulator_joint
+
