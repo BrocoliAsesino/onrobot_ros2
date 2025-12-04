@@ -51,7 +51,7 @@ class VGC10GripperBase:
         vacuum_level = max(0, min(80, int(vacuum_level)))
         command_value = self._build_command_word(MODE_GRIP, vacuum_level)
         if not channel in ['A', 'B']:
-            success = self.modbus_client._safe_write_holding_register(0, [command_value, command_value])
+            success = self.modbus_client._safe_write_holding_registers(0, [command_value, command_value])
             if success:
                 print(f"--> Commanding BOTH Channels to GRIP at {vacuum_level}% (Value: {command_value}).")
                 print(f"Status: Both Channels Grip command sent successfully.")
@@ -72,7 +72,7 @@ class VGC10GripperBase:
     def deactivate_suction(self):
         """Sends the Release command (MODE_RELEASE) to the specified channel."""
         command_value = self._build_command_word(MODE_RELEASE, 0)
-        success = self.modbus_client._safe_write_holding_register(0, [command_value, command_value])
+        success = self.modbus_client._safe_write_holding_registers(0, [command_value, command_value])
         
         if success:
             print(f"Status: Both Channels Release command sent successfully.")
@@ -100,6 +100,19 @@ class VGC10GripperBase:
         if success:
             print(f"Status: {channel_name} Idle command sent successfully.")
         return success
+    
+    def read_vacuum_percent(self):
+        """Reads the vacuum levels of both channels and returns them as percentages."""
+        reg_A = self.modbus_client._safe_read_holding_registers(STATUS_ADDR_A_VACUUM, 1)
+        reg_B = self.modbus_client._safe_read_holding_registers(STATUS_ADDR_B_VACUUM, 1)
+        if reg_A is None or reg_B is None:
+            print("ERROR: Failed to read vacuum levels.")
+            return None
+        a_vac_permille = reg_A[0]
+        b_vac_permille = reg_B[0]
+        a_vac_pct = a_vac_permille / 10.0
+        b_vac_pct = b_vac_permille / 10.0
+        return {"A_Vacuum": a_vac_pct, "B_Vacuum": b_vac_pct}
 
     def read_status_individually(self):
         """
@@ -183,14 +196,14 @@ def test():
         try:
             # 1. Read initial status
             print("\n--- Reading Initial Status ---")
-            status = gripper.read_status()
-            for key, value in status.items():
-                print(f"| {key.ljust(20)}: {value}")
+            # status = gripper.read_status()
+            # for key, value in status.items():
+            #     print(f"| {key.ljust(20)}: {value}")
 
             # 2. Activate suction on Channel A at 80% vacuum
             print("\n--- Activating Suction (Channel A at 80%) ---")
             # gripper.activate_suction('A', vacuum_level=80)
-            gripper.grip_both(80)
+            gripper.activate_suction('AB', 80)
             
             # Simulated delay for vacuum to build
             time.sleep(2)
@@ -205,9 +218,9 @@ def test():
 
             # 3. Read status to confirm vacuum build-up
             print("\n--- Reading Status After Activation ---")
-            status = gripper.read_status()
-            for key, value in status.items():
-                print(f"| {key.ljust(20)}: {value}")
+            # status = gripper.read_status()
+            # for key, value in status.items():
+            #     print(f"| {key.ljust(20)}: {value}")
 
             print(modbus_comm._safe_read_holding_registers(24, 1))
 
@@ -218,10 +231,10 @@ def test():
             time.sleep(1)
 
             # 5. Read final status
-            print("\n--- Reading Final Status ---")
-            status = gripper.read_status()
-            for key, value in status.items():
-                print(f"| {key.ljust(20)}: {value}")
+            # print("\n--- Reading Final Status ---")
+            # status = gripper.read_status()
+            # for key, value in status.items():
+            #     print(f"| {key.ljust(20)}: {value}")
 
         finally:
             # --- SAFETY AND CLEANUP BLOCK ---
