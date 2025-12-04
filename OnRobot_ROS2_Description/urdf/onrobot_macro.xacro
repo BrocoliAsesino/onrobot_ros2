@@ -1,0 +1,70 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://wiki.ros.org/xacro">
+
+    <!-- Include the macro file for the specific OnRobot model -->
+    <xacro:macro name="onrobot"
+        params="
+        onrobot_type
+        prefix:=''
+        sim_gazebo:=false
+        use_fake_hardware:=false
+        connection_type:=serial
+        device:=/tmp/ttyUR
+        ip_address:=192.168.1.1
+        port:=502
+        ">
+
+        <xacro:if value="${onrobot_type == 'vgc10'}">
+            <xacro:include filename="$(find onrobot_vg_description)/urdf/onrobot_vgc10_4cups_model_macro.xacro"/>
+            <xacro:onrobot_vgc10 prefix="${prefix}"/>
+        </xacro:if>
+        <xacro:if value="${onrobot_type == 'vg10'}">
+            <xacro:include filename="$(find onrobot_description)/urdf/onrobot_vg10_model_macro.xacro"/>
+            <xacro:onrobot_vg10 prefix="${prefix}"/>
+        </xacro:if>
+
+        <!-- Enable the gazebo plugin for simulation -->
+        <xacro:if value="${sim_gazebo}">
+            <gazebo>
+                <plugin filename="libgazebo_ros2_control.so" name="gazebo_ros2_control"/>
+            </gazebo>
+        </xacro:if>
+
+        <xacro:unless value="${use_fake_hardware}">
+            <ros2_control name="OnRobotGripper" type="actuator">
+                <hardware>
+                    <xacro:if value="${sim_gazebo}">
+                        <plugin>gazebo_ros2_control/GazeboSystem</plugin>
+                    </xacro:if>
+                    <xacro:unless value="${sim_gazebo or use_fake_hardware}">
+                        <plugin>onrobot_driver/VGHardwareInterface</plugin>
+                        <param name="onrobot_type">${onrobot_type}</param>
+                        <param name="prefix">${prefix}</param>
+                        <param name="connection_type">${connection_type}</param>
+                        <param name="device">${device}</param>
+                        <param name="ip_address">${ip_address}</param>
+                        <param name="port">${port}</param>
+                    </xacro:unless>
+                </hardware>
+                <joint name="${prefix}_suction_regulator_joint">
+                    <command_interface name="position"/>
+                    <state_interface name="position"/>
+                </joint>
+            </ros2_control>
+        </xacro:unless>
+        <xacro:if value="${use_fake_hardware}">
+            <ros2_control name="OnRobotGripper" type="system">
+                <hardware>
+                    <plugin>mock_components/GenericSystem</plugin>
+                </hardware>
+                <joint name="${prefix}_suction_regulator_joint">
+                    <command_interface name="position"/>
+                    <state_interface name="position"/>
+                </joint>
+            </ros2_control>
+        </xacro:if>
+        <!-- Define the OnRobot gripper hardware interface for ROS 2 control -->
+        
+
+    </xacro:macro>
+</robot>
