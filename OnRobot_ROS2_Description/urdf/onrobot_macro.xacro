@@ -12,15 +12,33 @@
         device:=/tmp/ttyUR
         ip_address:=192.168.1.1
         port:=502
+        include_only_plugin:=true
         ">
+        <!-- Skip model geometry if include_only_plugin -->
+        <xacro:unless value="${include_only_plugin}">
+            <xacro:if value="${onrobot_type == 'vgc10'}">
+                <xacro:include filename="$(find onrobot_vg_description)/urdf/onrobot_vgc10_4cups_model_macro.xacro"/>
+                <xacro:onrobot_vgc10 prefix="${prefix}"/>
+            </xacro:if>
+            <xacro:if value="${onrobot_type == 'vg10'}">
+                <xacro:include filename="$(find onrobot_description)/urdf/onrobot_vg10_model_macro.xacro"/>
+                <xacro:onrobot_vg10 prefix="${prefix}"/>
+            </xacro:if>
+        </xacro:unless>
 
-        <xacro:if value="${onrobot_type == 'vgc10'}">
-            <xacro:include filename="$(find onrobot_vg_description)/urdf/onrobot_vgc10_4cups_model_macro.xacro"/>
-            <xacro:onrobot_vgc10 prefix="${prefix}"/>
-        </xacro:if>
-        <xacro:if value="${onrobot_type == 'vg10'}">
-            <xacro:include filename="$(find onrobot_description)/urdf/onrobot_vg10_model_macro.xacro"/>
-            <xacro:onrobot_vg10 prefix="${prefix}"/>
+        <xacro:if value="${include_only_plugin}">
+
+            <link name="${prefix}onrobot_vgc10_base_link"/>
+            <link name="${prefix}suction_regulator"/>
+
+            <joint name="${prefix}_suction_regulator_joint" type="prismatic">
+                <origin xyz="0 0 0" rpy="0 0 0"/>
+                <parent link="${prefix}onrobot_vgc10_base_link"/>
+                <child link="${prefix}suction_regulator"/>
+                <axis xyz="0 0 1"/>
+                <limit lower="0.0" upper="80.0" effort="100" velocity="0.2"/>
+                <dynamics damping="0.1" friction="0.0"/>
+            </joint>
         </xacro:if>
 
         <!-- Enable the gazebo plugin for simulation -->
