@@ -25,6 +25,7 @@ def generate_launch_description():
     launch_rviz = LaunchConfiguration('launch_rviz')
     launch_rsp = LaunchConfiguration('launch_rsp')
     use_fake_hardware = LaunchConfiguration('use_fake_hardware')
+    num_cups = LaunchConfiguration('num_cups')
 
     # Declare launch arguments
     declared_arguments = []
@@ -98,10 +99,18 @@ def generate_launch_description():
             description='Use fake hardware interface for testing.',
         )
     )
+    declared_arguments.append(
+        DeclareLaunchArgument(
+            'num_cups',
+            default_value='4',
+            description='Number of suction cups for VGC10 gripper (1 or 4). Only used for vgc10 type.',
+            choices=['1', '4'],
+        )
+    )
 
-    # Path to the xacro file in the onrobot_description package
+    # Path to the xacro file in the onrobot_descriptions package
     xacro_file = PathJoinSubstitution([
-        FindPackageShare('onrobot_description'),
+        FindPackageShare('onrobot_descriptions'),
         'urdf',
         'onrobot.urdf.xacro'
     ])
@@ -125,6 +134,8 @@ def generate_launch_description():
         'prefix:=', prefix,
         ' ',
         'use_fake_hardware:=', use_fake_hardware,
+        ' ',
+        ' um_cups:=', num_cups,
         ' ',
         'name:=onrobot'
     ])

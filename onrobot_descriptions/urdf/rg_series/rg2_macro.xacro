@@ -2,7 +2,7 @@
 <robot xmlns:xacro="http://ros.org/wiki/xacro">
 
   <xacro:property name="onrobot_type" value="rg2" />
-  <xacro:include filename="$(find onrobot_description)/urdf/inc/rg_common.xacro" />
+  <xacro:include filename="$(find onrobot_descriptions)/urdf/inc/rg_common.xacro" />
 
   <xacro:macro name="inner_knuckle_joint" params="prefix fingerprefix reflect">
     <joint name="${prefix}${fingerprefix}_inner_knuckle_joint" type="revolute">

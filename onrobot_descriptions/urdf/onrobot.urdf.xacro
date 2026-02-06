@@ -10,9 +10,10 @@
     <xacro:arg name="device" default="/tmp/ttyUR"/>
     <xacro:arg name="ip_address" default="192.168.1.1"/>
     <xacro:arg name="port" default="502"/>
+    <xacro:arg name="num_cups" default="4"/>
 
     <!-- Import the OnRobot macro -->
-    <xacro:include filename="$(find onrobot_description)/urdf/onrobot_macro.xacro"/>
+    <xacro:include filename="$(find onrobot_descriptions)/urdf/onrobot_macro.xacro"/>
 
     <!-- Create OnRobot instance -->
     <xacro:onrobot
@@ -24,6 +25,7 @@
         device="$(arg device)"
         ip_address="$(arg ip_address)"
         port="$(arg port)"
+        num_cups="$(arg num_cups)"
     />
     
     <!-- Create link fixed to the world -->

@@ -13,6 +13,7 @@
         ip_address:=192.168.1.1
         port:=502
         include_only_plugin:=true
+        num_cups:=4
         ">
         
         <!-- ═══════════════════════════════════════════════════════════════
@@ -56,23 +57,27 @@
              ═══════════════════════════════════════════════════════════════ -->
         
         <xacro:unless value="${include_only_plugin}">
-            <!-- VG Grippers -->
+            <!-- VGC10 Gripper (1 or 4 cups) -->
             <xacro:if value="${onrobot_type == 'vgc10'}">
-                <xacro:include filename="$(find onrobot_vg_description)/urdf/onrobot_vgc10_4cups_model_macro.xacro"/>
-                <xacro:onrobot_vgc10 prefix="${prefix}"/>
+                <xacro:include filename="$(find onrobot_descriptions)/urdf/vg_series/vgc10/vgc10_macro.xacro"/>
+                <xacro:onrobot_vgc10 prefix="${prefix}" num_cups="${num_cups}"/>
             </xacro:if>
+            
+            <!-- VG10 Gripper -->
             <xacro:if value="${onrobot_type == 'vg10'}">
-                <xacro:include filename="$(find onrobot_vg_description)/urdf/onrobot_vg10_model_macro.xacro"/>
+                <xacro:include filename="$(find onrobot_descriptions)/urdf/vg_series/vg10/vg10_macro.xacro"/>
                 <xacro:onrobot_vg10 prefix="${prefix}"/>
             </xacro:if>
             
-            <!-- RG Grippers -->
+            <!-- RG2 Gripper -->
             <xacro:if value="${onrobot_type == 'rg2'}">
-                <xacro:include filename="$(find onrobot_description)/urdf/inc/rg_common.xacro"/>
+                <xacro:include filename="$(find onrobot_descriptions)/urdf/rg_series/rg2_macro.xacro"/>
                 <xacro:onrobot_rg2 prefix="${prefix}"/>
             </xacro:if>
+            
+            <!-- RG6 Gripper -->
             <xacro:if value="${onrobot_type == 'rg6'}">
-                <xacro:include filename="$(find onrobot_description)/urdf/inc/rg_common.xacro"/>
+                <xacro:include filename="$(find onrobot_descriptions)/urdf/rg_series/rg6_macro.xacro"/>
                 <xacro:onrobot_rg6 prefix="${prefix}"/>
             </xacro:if>
         </xacro:unless>
