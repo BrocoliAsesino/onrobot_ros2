@@ -11,6 +11,7 @@
     <xacro:arg name="ip_address" default="192.168.1.1"/>
     <xacro:arg name="port" default="502"/>
     <xacro:arg name="num_cups" default="4"/>
+    <xacro:arg name="include_only_plugin" default="false"/>
 
     <!-- Import the OnRobot macro -->
     <xacro:include filename="$(find onrobot_descriptions)/urdf/onrobot_macro.xacro"/>
@@ -26,6 +27,7 @@
         ip_address="$(arg ip_address)"
         port="$(arg port)"
         num_cups="$(arg num_cups)"
+        include_only_plugin="$(arg include_only_plugin)"
     />
     
     <!-- Create link fixed to the world -->

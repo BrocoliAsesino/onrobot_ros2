@@ -12,7 +12,7 @@
         device:=/tmp/ttyUR
         ip_address:=192.168.1.1
         port:=502
-        include_only_plugin:=true
+        include_only_plugin:=false
         num_cups:=4
         ">
         
