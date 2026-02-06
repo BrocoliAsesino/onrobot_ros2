@@ -26,7 +26,7 @@ def generate_launch_description():
     launch_rsp = LaunchConfiguration('launch_rsp')
     use_fake_hardware = LaunchConfiguration('use_fake_hardware')
     num_cups = LaunchConfiguration('num_cups')
-
+    include_only_plugin = LaunchConfiguration('include_only_plugin')
     # Declare launch arguments
     declared_arguments = []
     declared_arguments.append(
@@ -107,6 +107,14 @@ def generate_launch_description():
             choices=['1', '4'],
         )
     )
+    declared_arguments.append(
+        DeclareLaunchArgument(
+            'include_only_plugin',
+            default_value='false',
+            description='Include only the plugin without the full robot description.',
+            choices=['true', 'false'],
+        )
+    )
 
     # Path to the xacro file in the onrobot_descriptions package
     xacro_file = PathJoinSubstitution([
@@ -136,6 +144,8 @@ def generate_launch_description():
         'use_fake_hardware:=', use_fake_hardware,
         ' ',
         ' um_cups:=', num_cups,
+        ' ',
+        ' include_only_plugin:=', include_only_plugin,
         ' ',
         'name:=onrobot'
     ])
