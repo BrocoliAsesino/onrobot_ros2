@@ -1,0 +1,142 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://wiki.ros.org/xacro">
+  
+  <!-- ═══════════════════════════════════════════════════════════════
+       VGC10 GRIPPER MACRO - Unified for 1 or 4 cups
+       ═══════════════════════════════════════════════════════════════ -->
+  
+  <xacro:macro name="onrobot_vgc10" params="prefix num_cups:=4">
+    
+    <!-- Validate num_cups parameter -->
+    <xacro:if value="${num_cups not in [1, 4]}">
+      <xacro:error>num_cups must be 1 or 4</xacro:error>
+    </xacro:if>
+    
+    <!-- Set mesh file suffix based on cup count -->
+    <xacro:property name="mesh_suffix" value="${'1cup' if num_cups == 1 else '4cups'}" />
+    
+    <!-- ═══════════════════════════════════════════════════════════════
+         BASE LINK
+         ═══════════════════════════════════════════════════════════════ -->
+    
+    <link name="${prefix}onrobot_vgc10_base_link">
+      <inertial>
+        <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
+        <mass value="0.6" />
+        <inertia ixx="1.0E-03" ixy="1.0E-06" ixz="1.0E-06" iyy="1.0E-03" iyz="1.0E-06" izz="1.0E-03" />
+      </inertial>
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <geometry>
+          <mesh filename="package://onrobot_descriptions/meshes/vg_series/vgc10/visual/base_link_${mesh_suffix}.stl" />
+        </geometry>
+        <material name="">
+          <color rgba="0.8 0.8 0.8 1" />
+        </material>
+      </visual>
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <geometry>
+          <mesh filename="package://onrobot_descriptions/meshes/vg_series/vgc10/collision/base_link_${mesh_suffix}.stl" />
+        </geometry>
+      </collision>
+    </link>
+    
+    <!-- ═══════════════════════════════════════════════════════════════
+         SUCTION CUP LINKS
+         ═══════════════════════════════════════════════════════════════ -->
+    
+    <xacro:if value="${num_cups == 1}">
+      <!-- Single suction cup -->
+      <link name="${prefix}suction">
+        <inertial>
+          <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
+          <mass value="0.2" />
+          <inertia ixx="1.0E-03" ixy="1.0E-06" ixz="1.0E-06" iyy="1.0E-03" iyz="1.0E-06" izz="1.0E-03" />
+        </inertial>
+        <visual>
+          <origin xyz="0 0 0" rpy="0 0 0" />
+          <geometry>
+            <mesh filename="package://onrobot_descriptions/meshes/vg_series/vgc10/visual/suction_cup_1cup.stl" />
+          </geometry>
+          <material name="">
+            <color rgba="0.9 0.9 0.9 1" />
+          </material>
+        </visual>
+        <collision>
+          <origin xyz="0 0 0" rpy="0 0 0" />
+          <geometry>
+            <mesh filename="package://onrobot_descriptions/meshes/vg_series/vgc10/collision/suction_cup_1cup.stl" />
+          </geometry>
+        </collision>
+      </link>
+      
+      <joint name="${prefix}_suction_joint" type="fixed">
+        <origin xyz="0 0 0.094901" rpy="0 0 0" />
+        <parent link="${prefix}onrobot_vgc10_base_link" />
+        <child link="${prefix}suction" />
+      </joint>
+    </xacro:if>
+    
+    <xacro:if value="${num_cups == 4}">
+      <!-- Four suction cups -->
+      <xacro:macro name="suction_cup_link" params="cup_id">
+        <link name="${prefix}suction${cup_id}">
+          <inertial>
+            <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
+            <mass value="0.2" />
+            <inertia ixx="1.0E-03" ixy="1.0E-06" ixz="1.0E-06" iyy="1.0E-03" iyz="1.0E-06" izz="1.0E-03" />
+          </inertial>
+          <visual>
+            <origin xyz="0 0 0" rpy="0 0 0" />
+            <geometry>
+              <mesh filename="package://onrobot_descriptions/meshes/vg_series/vgc10/visual/suction_cup_4cups.stl" />
+            </geometry>
+            <material name="">
+              <color rgba="0.9 0.9 0.9 1" />
+            </material>
+          </visual>
+          <collision>
+            <origin xyz="0 0 0" rpy="0 0 0" />
+            <geometry>
+              <mesh filename="package://onrobot_descriptions/meshes/vg_series/vgc10/collision/suction_cup_4cups.stl" />
+            </geometry>
+          </collision>
+        </link>
+      </xacro:macro>
+      
+      <!-- Instantiate 4 cups -->
+      <xacro:suction_cup_link cup_id="1"/>
+      <xacro:suction_cup_link cup_id="2"/>
+      <xacro:suction_cup_link cup_id="3"/>
+      <xacro:suction_cup_link cup_id="4"/>
+      
+      <!-- Joints for 4 cups -->
+      <joint name="${prefix}_suction_joint1" type="fixed">
+        <origin xyz="0.050 -0.050 0.094901" rpy="0 0 0" />
+        <parent link="${prefix}onrobot_vgc10_base_link" />
+        <child link="${prefix}suction1" />
+      </joint>
+      
+      <joint name="${prefix}_suction_joint2" type="fixed">
+        <origin xyz="0.050 0.050 0.094901" rpy="0 0 0" />
+        <parent link="${prefix}onrobot_vgc10_base_link" />
+        <child link="${prefix}suction2" />
+      </joint>
+      
+      <joint name="${prefix}_suction_joint3" type="fixed">
+        <origin xyz="-0.050 -0.050 0.094901" rpy="0 0 0" />
+        <parent link="${prefix}onrobot_vgc10_base_link" />
+        <child link="${prefix}suction3" />
+      </joint>
+      
+      <joint name="${prefix}_suction_joint4" type="fixed">
+        <origin xyz="-0.050 0.050 0.094901" rpy="0 0 0" />
+        <parent link="${prefix}onrobot_vgc10_base_link" />
+        <child link="${prefix}suction4" />
+      </joint>
+    </xacro:if>
+    
+  </xacro:macro>
+  
+</robot>

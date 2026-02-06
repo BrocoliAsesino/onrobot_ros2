@@ -1,0 +1,66 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://wiki.ros.org/xacro">
+  
+  <!-- ═══════════════════════════════════════════════════════════════
+       VG10 GRIPPER MACRO
+       ═══════════════════════════════════════════════════════════════ -->
+  
+  <xacro:macro name="onrobot_vg10" params="prefix">
+    
+    <!-- Base Link -->
+    <link name="${prefix}onrobot_vg10_base_link">
+      <inertial>
+        <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
+        <mass value="0.65" />
+        <inertia ixx="1.0E-03" ixy="1.0E-06" ixz="1.0E-06" iyy="1.0E-03" iyz="1.0E-06" izz="1.0E-03" />
+      </inertial>
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <geometry>
+          <mesh filename="package://onrobot_descriptions/meshes/vg_series/vg10/visual/base_link.stl" />
+        </geometry>
+        <material name="">
+          <color rgba="0.8 0.8 0.8 1" />
+        </material>
+      </visual>
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <geometry>
+          <mesh filename="package://onrobot_descriptions/meshes/vg_series/vg10/collision/base_link.stl" />
+        </geometry>
+      </collision>
+    </link>
+    
+    <!-- Suction Pad -->
+    <link name="${prefix}suction_pad">
+      <inertial>
+        <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
+        <mass value="0.3" />
+        <inertia ixx="1.0E-03" ixy="1.0E-06" ixz="1.0E-06" iyy="1.0E-03" iyz="1.0E-06" izz="1.0E-03" />
+      </inertial>
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <geometry>
+          <mesh filename="package://onrobot_descriptions/meshes/vg_series/vg10/visual/suction_pad.stl" />
+        </geometry>
+        <material name="">
+          <color rgba="0.1 0.1 0.1 1" />
+        </material>
+      </visual>
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <geometry>
+          <mesh filename="package://onrobot_descriptions/meshes/vg_series/vg10/collision/suction_pad.stl" />
+        </geometry>
+      </collision>
+    </link>
+    
+    <joint name="${prefix}_suction_pad_joint" type="fixed">
+      <origin xyz="0 0 0.12" rpy="0 0 0" />
+      <parent link="${prefix}onrobot_vg10_base_link" />
+      <child link="${prefix}suction_pad" />
+    </joint>
+    
+  </xacro:macro>
+  
+</robot>
