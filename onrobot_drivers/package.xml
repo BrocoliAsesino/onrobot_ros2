@@ -23,7 +23,7 @@
   <depend>std_msgs</depend>
   <depend>std_srvs</depend>
   <depend>tf2_geometry_msgs</depend>
-  <depend>onrobot_description</depend>
+  <depend>onrobot_descriptions</depend>
 
   <exec_depend>joint_state_broadcaster</exec_depend>
   <exec_depend>joint_state_publisher</exec_depend>
