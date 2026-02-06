@@ -6,9 +6,9 @@
 #include <iostream>
 #include <thread>
 
-#include "onrobot_driver/IModbusConnection.hpp"
-#include "onrobot_driver/TCPConnectionWrapper.hpp"
-#include "onrobot_driver/SerialConnectionWrapper.hpp"
+#include "onrobot_drivers/common/IModbusConnection.hpp"
+#include "onrobot_drivers/common/TCPConnectionWrapper.hpp"
+#include "onrobot_drivers/common/SerialConnectionWrapper.hpp"
 
 // Modbus request/response definitions and utilities
 #include "MB/modbusRequest.hpp"

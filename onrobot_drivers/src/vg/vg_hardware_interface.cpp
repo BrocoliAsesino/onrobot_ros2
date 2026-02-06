@@ -1,4 +1,4 @@
-#include "onrobot_driver/vg_hardware_interface.hpp"
+#include "onrobot_drivers/vg/vg_hardware_interface.hpp"
 #include "pluginlib/class_list_macros.hpp"
 #include "rclcpp/rclcpp.hpp"
 
@@ -125,7 +125,7 @@ namespace vg_hardware_interface
         if (gripper_)
         {
             gripper_.reset();
-            gripper_.release();
+            gripper_.release();  // release() returns ownership without deleting
         }
         return hardware_interface::CallbackReturn::SUCCESS;
     }

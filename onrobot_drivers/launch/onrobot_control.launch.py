@@ -132,7 +132,7 @@ def generate_launch_description():
 
     # Path to the controller configuration file (using ParameterFile to load YAML)
     controller_config_file = PathJoinSubstitution([
-        FindPackageShare('onrobot_driver'),
+        FindPackageShare('onrobot_drivers'),
         'config',
         'vg_controllers.yaml'
     ])

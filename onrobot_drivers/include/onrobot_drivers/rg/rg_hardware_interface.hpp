@@ -1,5 +1,5 @@
-#ifndef VG_HW_INTERFACE_HPP
-#define VG_HW_INTERFACE_HPP
+#ifndef RG_HW_INTERFACE_HPP
+#define RG_HW_INTERFACE_HPP
 
 #include <memory>
 #include <vector>
@@ -12,16 +12,17 @@
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp_lifecycle/lifecycle_node.hpp"
 
-#include "VG.hpp"
+#include "onrobot_drivers/rg/RG.hpp"
 
-namespace vg_hardware_interface
+namespace rg_hardware_interface
 {
 
-    class VGHardwareInterface : public hardware_interface::ActuatorInterface
+    class RGHardwareInterface : public hardware_interface::ActuatorInterface
     {
     public:
-        VGHardwareInterface();
-        ~VGHardwareInterface() override;
+        RGHardwareInterface();
+        ~RGHardwareInterface() override;
+
         // Lifecycle methods
         hardware_interface::CallbackReturn on_init(const hardware_interface::HardwareInfo &info) override;
         hardware_interface::CallbackReturn on_configure(const rclcpp_lifecycle::State &previous_state) override;
@@ -41,12 +42,12 @@ namespace vg_hardware_interface
 
     private:
         // The gripper instance.
-        std::unique_ptr<VG> gripper_;
+        std::unique_ptr<RG> gripper_;
         std::string prefix_;
 
         // Internal joint variable (position) in SI units (metres).
-        double vacuum_state_;   // measured state (m)
-        double vacuum_command_; // commanded position (m)
+        double finger_width_state_;   // measured state (m)
+        double finger_width_command_; // commanded position (m)
 
         // Connection parameters from hardware_info.
         std::string onrobot_type_;
@@ -59,6 +60,6 @@ namespace vg_hardware_interface
         std::mutex hw_interface_mutex_;
     };
 
-} // namespace vg_hardware_interface
+} // namespace rg_hardware_interface
 
-#endif // VG_HW_INTERFACE_HPP
+#endif // RG_HW_INTERFACE_HPP

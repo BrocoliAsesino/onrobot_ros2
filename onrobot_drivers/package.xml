@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>onrobot_driver</name>
+  <name>onrobot_drivers</name>
   <version>0.0.1</version>
   <description>ROS2 driver for OnRobot grippers</description>
   <maintainer email="agonzalez.hdez1@gmail.com">Alejandro Gonzalez</maintainer>

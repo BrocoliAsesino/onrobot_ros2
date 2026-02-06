@@ -1,4 +1,4 @@
-#include "VG.hpp"
+#include "onrobot_drivers/vg/VG.hpp"
 
 VG::VG(const std::string &type, const std::string &ip, int port)
     : type(type)
