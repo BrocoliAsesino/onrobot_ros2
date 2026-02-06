@@ -28,9 +28,16 @@
     
     <!-- Create link fixed to the world -->
     <link name="world" />
-    <joint name="$(arg prefix)onrobot_vgc10_base_link" type="fixed">
+    
+    <!-- Fixed joint to world (base link name determined by gripper type) -->
+    <!-- For VG grippers: onrobot_vg_base_link, for RG: onrobot_rg_base_link -->
+    <xacro:property name="base_link_name" 
+        value="$(arg prefix)onrobot_vg_base_link" 
+        lazy_eval="false" />
+    
+    <joint name="world_to_gripper" type="fixed">
         <origin xyz="0 0 0" rpy="0 0 0"/>
         <parent link="world"/>
-        <child link="$(arg prefix)onrobot_vgc10_base_link"/>
+        <child link="${base_link_name}"/>
     </joint>
 </robot>

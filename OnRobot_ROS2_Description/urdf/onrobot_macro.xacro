@@ -14,48 +14,121 @@
         port:=502
         include_only_plugin:=true
         ">
-        <!-- Skip model geometry if include_only_plugin -->
+        
+        <!-- ═══════════════════════════════════════════════════════════════
+             GRIPPER TYPE DETECTION & CONFIGURATION
+             ═══════════════════════════════════════════════════════════════ -->
+        
+        <!-- Determine gripper family (VG, RG, 2FG, etc.) -->
+        <xacro:property name="is_vg_gripper" value="${onrobot_type in ['vg10', 'vgc10']}" />
+        <xacro:property name="is_rg_gripper" value="${onrobot_type in ['rg2', 'rg6']}" />
+        
+        <!-- Set plugin name based on gripper family -->
+        <xacro:if value="${is_vg_gripper}">
+            <xacro:property name="plugin_name" value="onrobot_drivers/VGHardwareInterface" />
+            <xacro:property name="gripper_base_link" value="${prefix}onrobot_vg_base_link" />
+            <xacro:property name="gripper_joint_name" value="${prefix}_suction_regulator_joint" />
+            <xacro:property name="gripper_joint_type" value="prismatic" />
+            <xacro:property name="gripper_link_name" value="${prefix}suction_regulator" />
+            <xacro:property name="joint_axis" value="0 0 1" />
+            <xacro:property name="joint_lower_limit" value="0.0" />
+            <xacro:property name="joint_upper_limit" value="80.0" />
+            <xacro:property name="joint_effort" value="100.0" />
+            <xacro:property name="joint_velocity" value="0.2" />
+        </xacro:if>
+        
+        <xacro:if value="${is_rg_gripper}">
+            <xacro:property name="plugin_name" value="onrobot_drivers/RGHardwareInterface" />
+            <xacro:property name="gripper_base_link" value="${prefix}onrobot_rg_base_link" />
+            <xacro:property name="gripper_joint_name" value="${prefix}_finger_width_joint" />
+            <xacro:property name="gripper_joint_type" value="prismatic" />
+            <xacro:property name="gripper_link_name" value="${prefix}finger_width" />
+            <xacro:property name="joint_axis" value="1 0 0" />
+            <!-- RG2: 0-110mm, RG6: 0-160mm -->
+            <xacro:property name="joint_lower_limit" value="0.0" />
+            <xacro:property name="joint_upper_limit" value="${0.110 if onrobot_type == 'rg2' else 0.160}" />
+            <xacro:property name="joint_effort" value="40.0" />
+            <xacro:property name="joint_velocity" value="0.15" />
+        </xacro:if>
+        
+        <!-- ═══════════════════════════════════════════════════════════════
+             LOAD 3D MODELS (Optional)
+             ═══════════════════════════════════════════════════════════════ -->
+        
         <xacro:unless value="${include_only_plugin}">
+            <!-- VG Grippers -->
             <xacro:if value="${onrobot_type == 'vgc10'}">
                 <xacro:include filename="$(find onrobot_vg_description)/urdf/onrobot_vgc10_4cups_model_macro.xacro"/>
                 <xacro:onrobot_vgc10 prefix="${prefix}"/>
             </xacro:if>
             <xacro:if value="${onrobot_type == 'vg10'}">
-                <xacro:include filename="$(find onrobot_description)/urdf/onrobot_vg10_model_macro.xacro"/>
+                <xacro:include filename="$(find onrobot_vg_description)/urdf/onrobot_vg10_model_macro.xacro"/>
                 <xacro:onrobot_vg10 prefix="${prefix}"/>
+            </xacro:if>
+            
+            <!-- RG Grippers -->
+            <xacro:if value="${onrobot_type == 'rg2'}">
+                <xacro:include filename="$(find onrobot_description)/urdf/inc/rg_common.xacro"/>
+                <xacro:onrobot_rg2 prefix="${prefix}"/>
+            </xacro:if>
+            <xacro:if value="${onrobot_type == 'rg6'}">
+                <xacro:include filename="$(find onrobot_description)/urdf/inc/rg_common.xacro"/>
+                <xacro:onrobot_rg6 prefix="${prefix}"/>
             </xacro:if>
         </xacro:unless>
 
+        <!-- ═══════════════════════════════════════════════════════════════
+             MINIMAL PLUGIN-ONLY MODEL
+             ═══════════════════════════════════════════════════════════════ -->
+        
         <xacro:if value="${include_only_plugin}">
+            <!-- Base link -->
+            <link name="${gripper_base_link}"/>
+            
+            <!-- Moving link (virtual representation) -->
+            <link name="${gripper_link_name}"/>
 
-            <link name="${prefix}onrobot_vgc10_base_link"/>
-            <link name="${prefix}suction_regulator"/>
-
-            <joint name="${prefix}_suction_regulator_joint" type="prismatic">
+            <!-- Joint definition -->
+            <joint name="${gripper_joint_name}" type="${gripper_joint_type}">
                 <origin xyz="0 0 0" rpy="0 0 0"/>
-                <parent link="${prefix}onrobot_vgc10_base_link"/>
-                <child link="${prefix}suction_regulator"/>
-                <axis xyz="0 0 1"/>
-                <limit lower="0.0" upper="80.0" effort="100" velocity="0.2"/>
+                <parent link="${gripper_base_link}"/>
+                <child link="${gripper_link_name}"/>
+                <axis xyz="${joint_axis}"/>
+                <limit 
+                    lower="${joint_lower_limit}" 
+                    upper="${joint_upper_limit}" 
+                    effort="${joint_effort}" 
+                    velocity="${joint_velocity}"/>
                 <dynamics damping="0.1" friction="0.0"/>
             </joint>
         </xacro:if>
 
-        <!-- Enable the gazebo plugin for simulation -->
+        <!-- ═══════════════════════════════════════════════════════════════
+             GAZEBO SIMULATION PLUGIN
+             ═══════════════════════════════════════════════════════════════ -->
+        
         <xacro:if value="${sim_gazebo}">
             <gazebo>
                 <plugin filename="libgazebo_ros2_control.so" name="gazebo_ros2_control"/>
             </gazebo>
         </xacro:if>
 
+        <!-- ═══════════════════════════════════════════════════════════════
+             ROS 2 CONTROL HARDWARE INTERFACE
+             ═══════════════════════════════════════════════════════════════ -->
+        
+        <!-- Real Hardware or Gazebo Simulation -->
         <xacro:unless value="${use_fake_hardware}">
             <ros2_control name="OnRobotGripper" type="actuator">
                 <hardware>
+                    <!-- Gazebo Simulation -->
                     <xacro:if value="${sim_gazebo}">
                         <plugin>gazebo_ros2_control/GazeboSystem</plugin>
                     </xacro:if>
+                    
+                    <!-- Real Hardware (TCP/Serial) -->
                     <xacro:unless value="${sim_gazebo or use_fake_hardware}">
-                        <plugin>onrobot_driver/VGHardwareInterface</plugin>
+                        <plugin>${plugin_name}</plugin>
                         <param name="onrobot_type">${onrobot_type}</param>
                         <param name="prefix">${prefix}</param>
                         <param name="connection_type">${connection_type}</param>
@@ -64,25 +137,29 @@
                         <param name="port">${port}</param>
                     </xacro:unless>
                 </hardware>
-                <joint name="${prefix}_suction_regulator_joint">
+                
+                <!-- Joint interfaces -->
+                <joint name="${gripper_joint_name}">
                     <command_interface name="position"/>
                     <state_interface name="position"/>
                 </joint>
             </ros2_control>
         </xacro:unless>
+        
+        <!-- Fake Hardware (Mock for Testing) -->
         <xacro:if value="${use_fake_hardware}">
             <ros2_control name="OnRobotGripper" type="system">
                 <hardware>
                     <plugin>mock_components/GenericSystem</plugin>
                 </hardware>
-                <joint name="${prefix}_suction_regulator_joint">
+                
+                <!-- Joint interfaces -->
+                <joint name="${gripper_joint_name}">
                     <command_interface name="position"/>
                     <state_interface name="position"/>
                 </joint>
             </ros2_control>
         </xacro:if>
-        <!-- Define the OnRobot gripper hardware interface for ROS 2 control -->
-        
 
     </xacro:macro>
 </robot>
