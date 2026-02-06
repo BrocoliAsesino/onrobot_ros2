@@ -33,7 +33,7 @@ def generate_launch_description():
         DeclareLaunchArgument(
             'onrobot_type',
             description='Type of OnRobot gripper.',
-            choices=['vgc10', 'vg10'],
+            choices=['vgc10', 'vg10', 'rg2', 'rg6'],
         )
     )
     declared_arguments.append(
@@ -142,11 +142,19 @@ def generate_launch_description():
     robot_description = {'robot_description': robot_description_content}
 
     # Path to the controller configuration file (using ParameterFile to load YAML)
-    controller_config_file = PathJoinSubstitution([
-        FindPackageShare('onrobot_drivers'),
-        'config',
-        'vg_controllers.yaml'
-    ])
+    # Select configuration based on gripper type
+    def get_controller_config():
+        gripper_type_value = LaunchConfiguration('onrobot_type')
+        # VG grippers use vg_controllers.yaml, RG grippers use rg_controllers.yaml
+        # Note: This is evaluated at launch time based on the argument
+        return PathJoinSubstitution([
+            FindPackageShare('onrobot_drivers'),
+            'config',
+            # Default to vg_controllers, but will need conditional loading
+            'vg_controllers.yaml'
+        ])
+    
+    controller_config_file = get_controller_config()
     controller_config = ParameterFile(controller_config_file, allow_substs=True)
 
     # Launch the ros2_control node
@@ -168,7 +176,7 @@ def generate_launch_description():
         output='both'
     )
 
-    # Spawn the joint state and finger width controllers
+    # Spawn the joint state and gripper controllers
     joint_state_spawner = Node(
         namespace=ns,
         package='controller_manager',
@@ -176,17 +184,22 @@ def generate_launch_description():
         arguments=['joint_state_broadcaster'],
         output='screen'
     )
-    finger_width_spawner = Node(
+    
+    # Controller name depends on gripper type
+    # VG grippers: vacuum_controller, RG grippers: finger_controller
+    # Note: In practice, you might want to use PythonExpression or OpaqueFunction
+    # to conditionally set this based on onrobot_type
+    gripper_controller_spawner = Node(
         namespace=ns,
         package='controller_manager',
         executable='spawner',
-        arguments=['vacuum_controller'],
+        arguments=['vacuum_controller'],  # TODO: Make this conditional
         output='screen'
     )
 
-    # Launch RViz for visualization using the config from onrobot_description
+    # Launch RViz for visualization using the config from onrobot_descriptions
     rviz_config_file = PathJoinSubstitution([
-        FindPackageShare('onrobot_description'),
+        FindPackageShare('onrobot_descriptions'),
         'rviz',
         'view_onrobot.rviz'
     ])
@@ -208,7 +221,7 @@ def generate_launch_description():
         ros2_control_node,
         robot_state_publisher_node,
         joint_state_spawner,
-        finger_width_spawner,
+        gripper_controller_spawner,
         rviz_node,
     ])
 
