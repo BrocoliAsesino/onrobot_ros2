@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 from launch_ros.actions import Node
-from launch_ros.parameter_descriptions import ParameterFile
 from launch_ros.substitutions import FindPackageShare
 
 from launch import LaunchDescription
@@ -12,6 +11,9 @@ from launch.substitutions import (
     LaunchConfiguration,
     PathJoinSubstitution,
 )
+
+from launch_ros.parameter_descriptions import ParameterFile
+
 
 def generate_launch_description():
     # Launch configuration variables
@@ -143,29 +145,26 @@ def generate_launch_description():
         ' ',
         'use_fake_hardware:=', use_fake_hardware,
         ' ',
-        ' um_cups:=', num_cups,
+        'num_cups:=', num_cups,
         ' ',
-        ' include_only_plugin:=', include_only_plugin,
+        'include_only_plugin:=', include_only_plugin,
         ' ',
         'name:=onrobot'
     ])
     robot_description = {'robot_description': robot_description_content}
 
-    # Path to the controller configuration file (using ParameterFile to load YAML)
-    # Select configuration based on gripper type
-    def get_controller_config():
-        gripper_type_value = LaunchConfiguration('onrobot_type')
-        # VG grippers use vg_controllers.yaml, RG grippers use rg_controllers.yaml
-        # Note: This is evaluated at launch time based on the argument
-        return PathJoinSubstitution([
-            FindPackageShare('onrobot_drivers'),
-            'config',
-            # Default to vg_controllers, but will need conditional loading
-            'vg_controllers.yaml'
-        ])
-    
-    controller_config_file = get_controller_config()
-    controller_config = ParameterFile(controller_config_file, allow_substs=True)
+    # Path to the controller configuration file
+    # Note: Currently hardcoded to vg_controllers.yaml
+    # TODO: Make conditional based on onrobot_type for RG grippers
+    controller_config_file = PathJoinSubstitution([
+        FindPackageShare('onrobot_drivers'),
+        'config',
+        'vg_controllers.yaml'
+    ])
+    controller_config = ParameterFile(
+        controller_config_file,
+        allow_substs=True
+)
 
     # Launch the ros2_control node
     ros2_control_node = Node(
