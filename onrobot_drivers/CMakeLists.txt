@@ -17,10 +17,15 @@ find_package(std_msgs REQUIRED)
 find_package(std_srvs REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
 
+# Find libnet system library
+find_library(LIBNET_LIBRARY NAMES net REQUIRED)
+find_path(LIBNET_INCLUDE_DIR NAMES libnet.h REQUIRED)
+
 include_directories(
   include
   ${CMAKE_SOURCE_DIR}/include/onrobot_drivers
   ${rclcpp_INCLUDE_DIRS}
+  ${LIBNET_INCLUDE_DIR}
 )
 
 set(THIS_PACKAGE_INCLUDE_DEPENDS
@@ -34,7 +39,6 @@ set(THIS_PACKAGE_INCLUDE_DEPENDS
   std_msgs
   std_srvs
   tf2_geometry_msgs
-  libnet1-dev
 )
 
 # Enable serial communication for the Modbus library.
@@ -54,6 +58,7 @@ add_library(onrobot_vg_plugin
 )
 target_link_libraries(onrobot_vg_plugin
   Modbus
+  ${LIBNET_LIBRARY}
 )
 target_include_directories(onrobot_vg_plugin
   PUBLIC
@@ -79,6 +84,7 @@ add_library(onrobot_rg_plugin
 )
 target_link_libraries(onrobot_rg_plugin
   Modbus
+  ${LIBNET_LIBRARY}
 )
 target_include_directories(onrobot_rg_plugin
   PUBLIC
