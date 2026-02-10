@@ -34,6 +34,7 @@ set(THIS_PACKAGE_INCLUDE_DEPENDS
   std_msgs
   std_srvs
   tf2_geometry_msgs
+  libnet1-dev
 )
 
 # Enable serial communication for the Modbus library.
