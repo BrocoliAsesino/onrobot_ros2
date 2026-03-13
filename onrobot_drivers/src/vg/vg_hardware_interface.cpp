@@ -7,7 +7,8 @@ namespace vg_hardware_interface
 
     VGHardwareInterface::VGHardwareInterface()
         : vacuum_state_(0.0),
-          vacuum_command_(0.0)
+          vacuum_command_(0.0),
+          vacuum_velocity_state_(0.0)
     {
     }
 
@@ -154,6 +155,10 @@ namespace vg_hardware_interface
     {
         std::vector<hardware_interface::StateInterface> state_interfaces;
         state_interfaces.emplace_back(hardware_interface::StateInterface(prefix_ + "_suction_regulator_joint", "position", &vacuum_state_));
+        // Velocity interface - always 0.0 since the gripper doesn't provide velocity feedback, but needed for GripperActionController
+        // May need to deactivate stalling checks in the controller.
+        state_interfaces.emplace_back(hardware_interface::StateInterface(prefix_ + "_suction_regulator_joint", "velocity", &vacuum_velocity_state_));
+        
         return state_interfaces;
     }
 
