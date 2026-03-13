@@ -3,11 +3,11 @@
 moveit_controller_manager: moveit_simple_controller_manager/MoveItSimpleControllerManager
 
 controller_names:
-  - onrobot_vgc10_controller
+  - /onrobot/vg_controller
 
-onrobot_vgc10_controller:
+/onrobot/vg_controller:
   type: GripperCommand
-  action_ns: gripper_command
+  action_ns: gripper_cmd
   default: true
   joints: 
     - _suction_regulator_joint
