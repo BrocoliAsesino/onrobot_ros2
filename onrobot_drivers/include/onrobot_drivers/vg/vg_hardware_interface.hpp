@@ -47,6 +47,7 @@ namespace vg_hardware_interface
         // Internal joint variable (position) in SI units (metres).
         double vacuum_state_;   // measured state (m)
         double vacuum_command_; // commanded position (m)
+        double vacuum_velocity_state_; // needed for the GripperActionController
 
         // Connection parameters from hardware_info.
         std::string onrobot_type_;

@@ -147,6 +147,7 @@
                 <joint name="${gripper_joint_name}">
                     <command_interface name="position"/>
                     <state_interface name="position"/>
+                    <state_interface name="velocity"/>
                 </joint>
             </ros2_control>
         </xacro:unless>
@@ -162,6 +163,7 @@
                 <joint name="${gripper_joint_name}">
                     <command_interface name="position"/>
                     <state_interface name="position"/>
+                    <state_interface name="velocity"/>
                 </joint>
             </ros2_control>
         </xacro:if>
