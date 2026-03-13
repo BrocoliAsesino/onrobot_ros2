@@ -6,11 +6,14 @@ $(var ns):
       joint_state_broadcaster:
         type: joint_state_broadcaster/JointStateBroadcaster
 
-      vacuum_controller:
-        type: position_controllers/JointGroupPositionController
+      vg_controller:
+        type: position_controllers/GripperActionController
         
-  vacuum_controller:
+  vg_controller:
     ros__parameters:
-      joints:
-        - _suction_regulator_joint
+      joint: _suction_regulator_joint
+      # Add these lines to relax the requirements:
+      allow_stalling: true
+      # This tells the controller it doesn't need a velocity state interface
+      check_joint_velocity_at_goal: false
 

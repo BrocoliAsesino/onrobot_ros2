@@ -202,7 +202,7 @@ def generate_launch_description():
         namespace=ns,
         package='controller_manager',
         executable='spawner',
-        arguments=['vacuum_controller'],  # TODO: Make this conditional
+        arguments=['vg_controller'],  # TODO: Make this conditional
         output='screen'
     )
 
