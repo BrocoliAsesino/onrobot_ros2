@@ -1,10 +1,10 @@
 cmake_minimum_required(VERSION 3.16)
-project(vgc10_moveit_config)
+project(onrobot_moveit_config)
 
 find_package(ament_cmake REQUIRED)
 
 install(
-  DIRECTORY config srdf rviz
+  DIRECTORY config srdf rviz launch
   DESTINATION share/${PROJECT_NAME}
 )
 

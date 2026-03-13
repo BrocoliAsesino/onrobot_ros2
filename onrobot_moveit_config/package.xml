@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package format="3">
-  <name>vgc10_moveit_config</name>
+  <name>onrobot_moveit_config</name>
   <version>0.3.0</version>
-  <description>MoveIt2 configuration for the OnRobot VGC10 model</description>
+  <description>MoveIt2 configuration for the OnRobot grippers</description>
   <maintainer email="alejandro.gonzalez@eurecat.org">Alejandro Gonzalez</maintainer>
   <author email="alejandro.gonzalez@eurecat.org">Alejandro Gonzalez</author>
   <license>BSD-3-Clause</license>
@@ -22,7 +22,7 @@
   <exec_depend>xacro</exec_depend>
   <exec_depend>tf2_ros</exec_depend>
   <exec_depend>rviz2</exec_depend>
-  <exec_depend>onrobot_vg_description</exec_depend>
+  <exec_depend>onrobot_description</exec_depend>
   <exec_depend>warehouse_ros_mongo</exec_depend>
 
   <export>
